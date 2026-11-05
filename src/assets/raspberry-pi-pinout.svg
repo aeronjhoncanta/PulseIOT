@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560">
+  <rect width="1000" height="560" fill="#eef7f8"/><g font-family="Arial,sans-serif">
+    <text x="50" y="58" font-size="30" font-weight="700" fill="#123545">Raspberry Pi GPIO reference</text>
+    <text x="50" y="88" font-size="16" fill="#58757e">Always confirm the exact board model and use 3.3 V logic</text>
+    <rect x="290" y="130" width="420" height="340" rx="35" fill="#273c49"/><circle cx="500" cy="300" r="95" fill="#354d5a"/><text x="500" y="307" text-anchor="middle" fill="#fff" font-size="22">Raspberry Pi</text>
+    <g fill="#1aaabd">{[...Array(20)].map((_,i)=><circle key={i} cx="260" cy={155+i*15} r="5"/>)}{[...Array(20)].map((_,i)=><circle key={i} cx="740" cy={155+i*15} r="5"/>)}</g>
+    <text x="80" y="180" fill="#123545" font-size="18">3V3 / 5V power</text><text x="80" y="220" fill="#123545" font-size="18">GND reference</text><text x="80" y="260" fill="#123545" font-size="18">BCM GPIO</text><text x="80" y="300" fill="#123545" font-size="18">I2C: SDA / SCL</text><text x="80" y="340" fill="#123545" font-size="18">SPI: MOSI / MISO</text><text x="80" y="380" fill="#123545" font-size="18">UART: TX / RX</text>
+  </g>
+</svg>

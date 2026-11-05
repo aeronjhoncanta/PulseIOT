@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650">
+  <rect width="1200" height="650" fill="#102431"/>
+  <g font-family="Arial,sans-serif" fill="#fff">
+    <text x="60" y="58" font-size="30" font-weight="700">IoT architecture</text>
+    <text x="60" y="88" font-size="16" fill="#a9c5cd">A reading moves through four responsibilities</text>
+    <g transform="translate(60 130)">
+      <rect width="1080" height="92" rx="14" fill="#1e5361"/><text x="28" y="38" font-size="22" font-weight="700">APPLICATION</text><text x="28" y="68" font-size="16">React dashboard • alerts • reports</text>
+      <rect y="112" width="1080" height="92" rx="14" fill="#1a6975"/><text x="28" y="150" font-size="22" font-weight="700">PROCESSING</text><text x="28" y="180" font-size="16">FastAPI validation • PostgreSQL history • rules</text>
+      <rect y="224" width="1080" height="92" rx="14" fill="#218a8d"/><text x="28" y="262" font-size="22" font-weight="700">NETWORK</text><text x="28" y="292" font-size="16">Wi-Fi • MQTT broker • HTTPS</text>
+      <rect y="336" width="1080" height="92" rx="14" fill="#28a9a0"/><text x="28" y="374" font-size="22" font-weight="700">PERCEPTION</text><text x="28" y="404" font-size="16">ESP32 • Raspberry Pi • sensors • actuators</text>
+    </g>
+  </g>
+</svg>
