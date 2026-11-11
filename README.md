@@ -86,6 +86,18 @@ docker compose ps
 
 Open `http://localhost` and sign in with `DEMO_USERNAME` and `DEMO_PASSWORD`. The backend container waits for PostgreSQL, runs `alembic upgrade head`, and then starts FastAPI. The simulator publishes temperature and humidity readings for `ESP-0421`; the subscriber persists them in PostgreSQL and they appear in the dashboard.
 
+### ESP32 multi-sensor node
+
+The MQTT subscriber accepts the ESP32 payload on `iot/devices/esp32-sensor-01/telemetry` and stores each valid field as a normalized reading:
+
+- `temperature_c` from DS18B20 on GPIO 4 (`°C`)
+- `mq_raw` from the MQ sensor on GPIO 34 (`raw`)
+- `distance_cm` from HC-SR04 on GPIO 5/18 (`cm`)
+
+The reference Arduino sketch is [firmware/esp32_multi_sensor/esp32_multi_sensor.ino](./firmware/esp32_multi_sensor/esp32_multi_sensor.ino). It sends JSON telemetry over USB at 115200 baud; it does not require Wi-Fi or MQTT credentials on the ESP32. Upload it with the OneWire, DallasTemperature, and ArduinoJson libraries installed.
+
+Run `docker compose up --build -d` after setting the MQTT credentials in `.env`. The `serial-bridge` service reads `/dev/ttyUSB0` and forwards USB telemetry to the internal MQTT broker. The `esp32-sensor-01` device is created by the seed step, and its status changes online when telemetry arrives or offline after 20 seconds without a reading. Apply migrations with the normal backend startup or `docker compose exec backend alembic upgrade head`.
+
 Useful operations:
 
 ```bash

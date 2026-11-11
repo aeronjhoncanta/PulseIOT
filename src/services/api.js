@@ -12,6 +12,7 @@ async function request(path, options = {}) {
   const token = localStorage.getItem(TOKEN_KEY)
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -50,7 +51,18 @@ export const api = {
   async devices(search = '') { await ensureAuth(); return request(`/devices${search ? `?search=${encodeURIComponent(search)}` : ''}`) },
   async createDevice(payload) { await ensureAuth(); return request('/devices', { method: 'POST', body: JSON.stringify(payload) }) },
   async deleteDevice(id) { await ensureAuth(); return request(`/devices/${encodeURIComponent(id)}`, { method: 'DELETE' }) },
-  async readings() { await ensureAuth(); return request('/readings/latest') },
+  async readings(deviceId) {
+    await ensureAuth()
+    const query = new URLSearchParams()
+    if (deviceId) query.set('device_id', deviceId)
+    query.set('_t', Date.now().toString())
+    return request(`/readings/latest?${query}`)
+  },
+  async readingsHistory(params = {}) {
+    await ensureAuth()
+    const query = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== undefined && value !== ''))
+    return request(`/readings/history${query.toString() ? `?${query}` : ''}`)
+  },
   async createReading(payload) { await ensureAuth(); return request('/readings', { method: 'POST', body: JSON.stringify(payload) }) },
   async alerts() { await ensureAuth(); return request('/alerts') },
   async updateAlert(id, state) { await ensureAuth(); return request(`/alerts/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ state }) }) },

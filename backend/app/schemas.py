@@ -58,6 +58,14 @@ class ReadingCreate(BaseModel):
     recorded_at: datetime
 
 
+class Esp32Telemetry(BaseModel):
+    device_id: str = Field(min_length=1, max_length=40)
+    temperature_c: float | None = Field(default=None, ge=-55, le=125)
+    mq_raw: int | None = Field(default=None, ge=0, le=4095)
+    distance_cm: float | None = Field(default=None, ge=2, le=400)
+    recorded_at_ms: int | None = Field(default=None, ge=0)
+
+
 class Alert(BaseModel):
     id: str
     severity: AlertSeverity
@@ -77,6 +85,7 @@ class Threshold(BaseModel):
     warning: float
     critical: float
     enabled: bool = True
+    condition: str = "above"
 
 
 class LoginRequest(BaseModel):

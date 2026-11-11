@@ -5,6 +5,7 @@ Revises:
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 revision = "0001_initial_schema"
 down_revision = None
@@ -13,12 +14,12 @@ depends_on = None
 
 
 def upgrade():
-    device_status = sa.Enum("online", "offline", "maintenance", name="device_status")
-    alert_severity = sa.Enum("info", "warning", "critical", name="alert_severity")
-    alert_state = sa.Enum("open", "acknowledged", "resolved", name="alert_state")
-    device_status.create(op.get_bind(), checkfirst=True)
-    alert_severity.create(op.get_bind(), checkfirst=True)
-    alert_state.create(op.get_bind(), checkfirst=True)
+    device_status = postgresql.ENUM("online", "offline", "maintenance", name="device_status", create_type=False)
+    alert_severity = postgresql.ENUM("info", "warning", "critical", name="alert_severity", create_type=False)
+    alert_state = postgresql.ENUM("open", "acknowledged", "resolved", name="alert_state", create_type=False)
+    op.execute("DO $$ BEGIN CREATE TYPE device_status AS ENUM ('online', 'offline', 'maintenance'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE alert_severity AS ENUM ('info', 'warning', 'critical'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
+    op.execute("DO $$ BEGIN CREATE TYPE alert_state AS ENUM ('open', 'acknowledged', 'resolved'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;")
     op.create_table("users", sa.Column("id", sa.Integer(), primary_key=True), sa.Column("username", sa.String(100), nullable=False, unique=True), sa.Column("password_hash", sa.String(255), nullable=False), sa.Column("password_salt", sa.String(64), nullable=False), sa.Column("role", sa.String(30), nullable=False), sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()))
     op.create_index("ix_users_username", "users", ["username"], unique=True)
     op.create_table("devices", sa.Column("id", sa.String(40), primary_key=True), sa.Column("name", sa.String(100), nullable=False), sa.Column("type", sa.String(50), nullable=False), sa.Column("location", sa.String(120), nullable=False), sa.Column("status", device_status, nullable=False), sa.Column("last_seen", sa.DateTime(timezone=True), server_default=sa.func.now()), sa.Column("image", sa.Text(), nullable=False), sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()))

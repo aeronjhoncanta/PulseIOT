@@ -6,9 +6,9 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from .database import get_db
-from .models import AlertModel, SensorThresholdModel
+from .models import AlertModel, DeviceModel, SensorThresholdModel
 from .repository import repository, to_alert
-from .schemas import Alert, AlertStatusUpdate, DashboardStats, Device, DeviceCreate, DeviceUpdate, Reading, ReadingCreate, Threshold, LoginRequest, TokenResponse
+from .schemas import Alert, AlertStatusUpdate, DashboardStats, Device, DeviceCreate, DeviceUpdate, Esp32Telemetry, Reading, ReadingCreate, Threshold, LoginRequest, TokenResponse
 from .security import authenticate, logout, require_auth
 
 router = APIRouter(prefix="/api")
@@ -87,6 +87,16 @@ def create_reading(payload: ReadingCreate, _: str = Depends(require_auth), db: S
         raise HTTPException(status_code=404, detail="Device not found") from exc
 
 
+@router.post("/telemetry/esp32", response_model=list[Reading], status_code=201)
+def create_esp32_telemetry(payload: Esp32Telemetry, _: str = Depends(require_auth), db: Session = Depends(get_db)):
+    try:
+        return repository.create_esp32_telemetry(db, payload)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Device not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
 @router.get("/readings/history", response_model=list[Reading])
 def historical_readings(device_id: str | None = None, limit: int = Query(default=50, ge=1, le=500), start: datetime | None = None, end: datetime | None = None, _: str = Depends(require_auth), db: Session = Depends(get_db)):
     return repository.readings(db, device_id=device_id, limit=limit, start=start, end=end)
@@ -94,6 +104,7 @@ def historical_readings(device_id: str | None = None, limit: int = Query(default
 
 @router.get("/alerts", response_model=list[Alert])
 def list_alerts(_: str = Depends(require_auth), db: Session = Depends(get_db)):
+    repository.refresh_stale_devices(db)
     return [to_alert(item) for item in db.scalars(select(AlertModel).order_by(AlertModel.created_at.desc())).all()]
 
 
@@ -132,6 +143,12 @@ def update_threshold(sensor: str, payload: Threshold, _: str = Depends(require_a
 def export_readings(_: str = Depends(require_auth), db: Session = Depends(get_db)):
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["sensor", "device_id", "value", "unit", "recorded_at"])
-    writer.writerows([reading.model_dump().values() for reading in repository.readings(db)])
+    writer.writerow(["record_type", "sensor", "device_id", "location", "value", "unit", "recorded_at", "severity", "alert_state", "alert_title"])
+    readings = repository.readings(db, limit=500)
+    devices = {device.id: device for device in db.scalars(select(DeviceModel)).all()}
+    for reading in readings:
+        device = devices.get(reading.device_id)
+        writer.writerow(["reading", reading.sensor, reading.device_id, device.location if device else "", reading.value, reading.unit, reading.recorded_at, "", "", ""])
+    for alert in db.scalars(select(AlertModel).order_by(AlertModel.created_at.desc())).all():
+        writer.writerow(["alert", "", alert.device_id, alert.location, "", "", alert.created_at, alert.severity.value, alert.state.value, alert.title])
     return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=sensor-readings.csv"})

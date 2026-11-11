@@ -61,6 +61,7 @@ class SensorThresholdModel(Base):
     warning: Mapped[Decimal] = mapped_column(Numeric(18, 6))
     critical: Mapped[Decimal] = mapped_column(Numeric(18, 6))
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    condition: Mapped[str] = mapped_column(String(10), default="above")
 
 
 class SystemLogModel(Base):

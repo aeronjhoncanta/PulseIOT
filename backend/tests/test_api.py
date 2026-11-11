@@ -92,3 +92,19 @@ def test_authenticated_reading_ingestion():
     })
     assert response.status_code == 201
     assert response.json()["value"] == 24.5
+
+
+def test_esp32_telemetry_ingestion_creates_sensor_readings():
+    headers = {"Authorization": f"Bearer {token()}"}
+    response = client.post("/api/telemetry/esp32", headers=headers, json={
+        "device_id": "esp32-sensor-01",
+        "temperature_c": 28.5,
+        "mq_raw": 1250,
+        "distance_cm": 35.6,
+        "recorded_at_ms": 123456,
+    })
+    assert response.status_code == 201
+    assert {reading["sensor"] for reading in response.json()} == {"Temperature", "MQ raw", "Distance"}
+    device = client.get("/api/devices/esp32-sensor-01", headers=headers)
+    assert device.status_code == 200
+    assert device.json()["status"] == "Online"

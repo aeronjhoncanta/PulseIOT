@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from .database import SessionLocal
 from .repository import repository
-from .schemas import ReadingCreate
+from .schemas import Esp32Telemetry, ReadingCreate
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger("pulse-mqtt-subscriber")
@@ -29,14 +29,18 @@ def on_connect(client: mqtt.Client, _userdata, _flags, reason_code, _properties=
 
 def on_message(_client: mqtt.Client, _userdata, message: mqtt.MQTTMessage):
     try:
-        payload = ReadingCreate.model_validate(json.loads(message.payload))
+        raw_payload = json.loads(message.payload)
+        payload = Esp32Telemetry.model_validate(raw_payload) if any(key in raw_payload for key in ("temperature_c", "mq_raw", "distance_cm")) else ReadingCreate.model_validate(raw_payload)
     except (json.JSONDecodeError, ValidationError) as exc:
         logger.warning("Ignoring invalid telemetry on %s: %s", message.topic, exc)
         return
 
     try:
         with SessionLocal() as db:
-            repository.create_reading(db, payload)
+            if isinstance(payload, Esp32Telemetry):
+                repository.create_esp32_telemetry(db, payload)
+            else:
+                repository.create_reading(db, payload)
     except KeyError:
         logger.warning("Ignoring telemetry for unknown device %s", payload.device_id)
     except Exception:
