@@ -35,6 +35,16 @@ npm install
 npm run dev
 ```
 
+Vite listens on all network interfaces, so other devices on the same local
+network can open `http://<HOST_LAN_IP>:5173`. Find the host address with
+`hostname -I`. The Vite proxy forwards `/api` requests to the local backend.
+The preview server is also network-accessible:
+
+```bash
+npm run build
+npm run preview
+```
+
 The production frontend uses the same-origin `/api` path through Nginx. For local Vite development, set `VITE_API_URL=http://localhost:8000/api` if the backend is running separately.
 
 ## API
@@ -84,7 +94,18 @@ docker compose up --build -d
 docker compose ps
 ```
 
-Open `http://localhost` and sign in with `DEMO_USERNAME` and `DEMO_PASSWORD`. The backend container waits for PostgreSQL, runs `alembic upgrade head`, and then starts FastAPI. The simulator publishes temperature and humidity readings for `ESP-0421`; the subscriber persists them in PostgreSQL and they appear in the dashboard.
+Open `http://localhost` or `http://<HOST_LAN_IP>` from another device on the same
+network and sign in with `DEMO_USERNAME` and `DEMO_PASSWORD`. Compose binds the
+frontend to all host interfaces by default; override `HTTP_BIND_ADDRESS` or
+`HTTP_PORT` in `.env` when needed. The backend container waits for PostgreSQL,
+runs `alembic upgrade head`, and then starts FastAPI. The simulator publishes
+temperature and humidity readings for `ESP-0421`; the subscriber persists them
+in PostgreSQL and they appear in the dashboard.
+
+If the LAN URL is unreachable, allow the configured HTTP port through the host
+firewall and ensure the devices are on the same network. Do not expose the
+development Vite server or Docker Compose deployment directly to the public
+internet without adding authentication, HTTPS, and a hardened reverse proxy.
 
 ### ESP32 multi-sensor node
 
